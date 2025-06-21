@@ -28,6 +28,7 @@ window.CONFIG = {
       medio: 30,
       pequeño: 15
     },
+    escalaGlobal: 1.5, // Escala general de la criatura (1 = normal, >1 más grande)
     
     // Patrón de distribución de tamaños
     patronTamaños: ['grande', 'medio', 'pequeño', 'grande', 'medio', 'pequeño', 'pequeño'],
@@ -105,9 +106,9 @@ window.CONFIG = {
   
   // Configuración de interactividad
   interaccion: {
-    distanciaReaccion: 100,
-    fuerzaEscape: 2,
-    suavidadSeguimiento: 0.15
+    distanciaReaccion: 180,
+    fuerzaEscape: 8,
+    suavidadSeguimiento: 0.18
   },
   
   // Configuración de límites

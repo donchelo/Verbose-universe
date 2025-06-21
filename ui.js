@@ -140,6 +140,7 @@ window.UIManager = {
     this.controles.tamañoGrande = this.crearSlider(0, 0, 120, 12, 20, 80, window.CONFIG.criatura.tamaños.grande, "Tamaño grande");
     this.controles.tamañoMedio = this.crearSlider(0, 0, 120, 12, 15, 50, window.CONFIG.criatura.tamaños.medio, "Tamaño medio");
     this.controles.tamañoPequeño = this.crearSlider(0, 0, 120, 12, 5, 25, window.CONFIG.criatura.tamaños.pequeño, "Tamaño pequeño");
+    this.controles.escalaGlobal = this.crearSlider(0, 0, 120, 12, 0.5, 3, window.CONFIG.criatura.escalaGlobal, "Escala general");
 
     // === TENTÁCULOS ===
     let tentaculosLabel = createDiv('Tentáculos');
@@ -389,6 +390,7 @@ window.UIManager = {
     window.CONFIG.criatura.elasticidad = this.controles.elasticidad.value();
     window.CONFIG.criatura.bioluminiscencia = this.controles.bioluminiscencia.value();
     window.CONFIG.criatura.patronTentaculos = this.controles.patronTentaculos.value();
+    window.CONFIG.criatura.escalaGlobal = this.controles.escalaGlobal.value();
     if (window.creature && typeof window.creature.recalcularFormasSegmentos === 'function') {
       window.creature.recalcularFormasSegmentos();
     }

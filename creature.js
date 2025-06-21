@@ -67,7 +67,7 @@ class CreatureManager {
       this.segmentos.push({
         x: this.position.x - i * CONFIG.criatura.distanciaSegmentos,
         y: this.position.y,
-        tamaño: this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño,
+        tamaño: (this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.escalaGlobal,
         fase: i * CONFIG.criatura.factorDesfase,
         velocidadX: 0,
         velocidadY: 0,
@@ -77,7 +77,7 @@ class CreatureManager {
         elasticidad: CONFIG.criatura.elasticidad,
         bioluminiscencia: CONFIG.criatura.bioluminiscencia,
         patronTentaculos: CONFIG.criatura.patronTentaculos,
-        tentaculos: Math.max(CONFIG.criatura.tentaculosBase, Math.round((this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.tentaculosFactorTamaño)),
+        tentaculos: Math.max(CONFIG.criatura.tentaculosBase, Math.round((this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.tentaculosFactorTamaño * CONFIG.criatura.escalaGlobal)),
       });
     }
   }
@@ -148,7 +148,7 @@ class CreatureManager {
         this.segmentos.push({
           x: ultimoSegmento.x - CONFIG.criatura.distanciaSegmentos,
           y: ultimoSegmento.y,
-          tamaño: this.terciosSizes[nuevoIndice] || CONFIG.criatura.tamaños.pequeño,
+          tamaño: (this.terciosSizes[nuevoIndice] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.escalaGlobal,
           fase: nuevoIndice * CONFIG.criatura.factorDesfase,
           velocidadX: 0,
           velocidadY: 0,
@@ -158,7 +158,7 @@ class CreatureManager {
           elasticidad: CONFIG.criatura.elasticidad,
           bioluminiscencia: CONFIG.criatura.bioluminiscencia,
           patronTentaculos: CONFIG.criatura.patronTentaculos,
-          tentaculos: Math.max(CONFIG.criatura.tentaculosBase, Math.round((this.terciosSizes[nuevoIndice] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.tentaculosFactorTamaño)),
+          tentaculos: Math.max(CONFIG.criatura.tentaculosBase, Math.round((this.terciosSizes[nuevoIndice] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.tentaculosFactorTamaño * CONFIG.criatura.escalaGlobal)),
         });
       }
     } else if (diferencia < 0) {
@@ -392,7 +392,7 @@ class CreatureManager {
     for (let i = 0; i < min(CONFIG.criatura.numeroSegmentos, this.segmentos.length); i++) {
       let seg = this.segmentos[i];
       if (!seg) continue;
-      let tamaño = seg.tamaño;
+      let tamaño = seg.tamaño * CONFIG.criatura.escalaGlobal;
       fill(CONFIG.criatura.color[0], CONFIG.criatura.color[1], CONFIG.criatura.color[2], 220);
       push();
       translate(seg.x, seg.y);
@@ -414,9 +414,9 @@ class CreatureManager {
       if (CONFIG.criatura.tentaculosPorSegmento && seg.tentaculos > 0) {
         let t = (typeof this.tiempo !== 'undefined') ? this.tiempo : 0;
         let num = seg.tentaculos;
-        let longitud = seg.tamaño * 0.7 + CONFIG.criatura.cabeza.longitudTentaculos * (seg.tamaño / CONFIG.criatura.tamaños.grande);
-        let grosor = CONFIG.criatura.cabeza.grosorTentaculos * (seg.tamaño / CONFIG.criatura.tamaños.grande);
-        let punta = CONFIG.criatura.cabeza.tamañoPuntas * (seg.tamaño / CONFIG.criatura.tamaños.grande);
+        let longitud = seg.tamaño * 0.7 * CONFIG.criatura.escalaGlobal + CONFIG.criatura.cabeza.longitudTentaculos * (seg.tamaño / CONFIG.criatura.tamaños.grande) * CONFIG.criatura.escalaGlobal;
+        let grosor = CONFIG.criatura.cabeza.grosorTentaculos * (seg.tamaño / CONFIG.criatura.tamaños.grande) * CONFIG.criatura.escalaGlobal;
+        let punta = CONFIG.criatura.cabeza.tamañoPuntas * (seg.tamaño / CONFIG.criatura.tamaños.grande) * CONFIG.criatura.escalaGlobal;
         for (let j = 0; j < num; j++) {
           let anguloBase = (PI * 2 / num) * j - PI / 2;
           let desfase = 0;
@@ -462,20 +462,20 @@ class CreatureManager {
       let anguloBase = (PI * 2 / config.numeroTentaculos) * i - PI/2;
       let desfase = sin(t * config.amplitudMovimiento + i) * 0.4;
       let angulo = anguloBase + desfase;
-      let longitud = cabeza.tamaño * 0.8 + config.longitudTentaculos; // Proporcional a la cabeza
+      let longitud = cabeza.tamaño * 0.8 * CONFIG.criatura.escalaGlobal + config.longitudTentaculos * CONFIG.criatura.escalaGlobal;
       let x2 = cos(angulo) * longitud;
       let y2 = sin(angulo) * longitud;
       stroke(30, 30, 30);
-      strokeWeight(config.grosorTentaculos);
+      strokeWeight(config.grosorTentaculos * CONFIG.criatura.escalaGlobal);
       line(0, 0, x2, y2);
       fill(30, 30, 30);
       noStroke();
-      ellipse(x2, y2, config.tamañoPuntas, config.tamañoPuntas);
+      ellipse(x2, y2, config.tamañoPuntas * CONFIG.criatura.escalaGlobal, config.tamañoPuntas * CONFIG.criatura.escalaGlobal);
     }
     stroke(30, 30, 30);
     strokeWeight(CONFIG.criatura.grosorContorno + 1);
     fill(CONFIG.criatura.color[0], CONFIG.criatura.color[1], CONFIG.criatura.color[2], 240);
-    let tamaño = cabeza.tamaño * 1.15;
+    let tamaño = cabeza.tamaño * 1.15 * CONFIG.criatura.escalaGlobal;
     let forma = cabeza.forma || 'circulo';
     if (forma === 'cuadrado') {
       rectMode(CENTER);
@@ -674,7 +674,7 @@ class CreatureManager {
     for (let i = 0; i < this.segmentos.length; i++) {
       let seg = this.segmentos[i];
       if (!seg) continue;
-      seg.tamaño = this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño;
+      seg.tamaño = (this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.escalaGlobal;
     }
   }
 }
