@@ -184,7 +184,7 @@ window.UIManager = {
     selectModo.option('Acercarse al mouse', 'acercarse');
     selectModo.option('Automático', 'automatico');
     selectModo.option('Control manual (flechas)', 'manual');
-    selectModo.value('huir');
+    selectModo.value('manual');
     selectModo.changed(() => {
       if (window.creature) {
         window.creature.setModoMovimiento(selectModo.value());

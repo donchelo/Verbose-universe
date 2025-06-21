@@ -16,7 +16,7 @@ class CreatureManager {
       colisionesConBordes: 0,
       interaccionesConMouse: 0
     };
-    this.modoMovimiento = 'huir'; // 'automatico', 'huir', 'acercarse', 'manual'
+    this.modoMovimiento = 'manual'; // 'automatico', 'huir', 'acercarse', 'manual'
     this.direccionManual = { x: 0, y: 0 };
     
     this.init();

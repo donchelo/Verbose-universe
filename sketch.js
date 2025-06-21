@@ -151,9 +151,11 @@ function keyPressed() {
       togglePause();
     }
     
-    // Reset con tecla 'r'
+    // Random con tecla 'r'
     if (key === 'r' || key === 'R') {
-      resetEverything();
+      if (window.UIManager) {
+        window.UIManager.randomizarTodo();
+      }
     }
     
     // Toggle panel con tecla 'p'
