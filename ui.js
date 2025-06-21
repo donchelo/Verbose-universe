@@ -129,6 +129,26 @@ window.UIManager = {
     this.controles.colorG = this.crearSlider(0, 0, 120, 12, 0, 255, window.CONFIG.criatura.color[1], "Color Verde");
     this.controles.colorB = this.crearSlider(0, 0, 120, 12, 0, 255, window.CONFIG.criatura.color[2], "Color Azul");
     this.controles.grosorContorno = this.crearSlider(0, 0, 120, 12, 1, 8, window.CONFIG.criatura.grosorContorno, "Grosor de contorno");
+
+    // === MODO DE MOVIMIENTO ===
+    let modoLabel = createDiv('Modo de movimiento');
+    modoLabel.parent(panelDiv);
+    modoLabel.style('font-weight', 'bold');
+    modoLabel.style('margin', '10px 0 4px 0');
+    modoLabel.style('font-size', '13px');
+    let selectModo = createSelect();
+    selectModo.parent(panelDiv);
+    selectModo.option('Huir del mouse', 'huir');
+    selectModo.option('Acercarse al mouse', 'acercarse');
+    selectModo.option('Automático', 'automatico');
+    selectModo.option('Control manual (flechas)', 'manual');
+    selectModo.value('huir');
+    selectModo.changed(() => {
+      if (window.creature) {
+        window.creature.setModoMovimiento(selectModo.value());
+      }
+    });
+    this.controles.selectModo = selectModo;
   },
   
   crearSlider: function(x, y, w, h, min, max, val, label) {
@@ -433,5 +453,11 @@ window.UIManager = {
       }
     }
     console.log("Valores aplicados desde preset");
+  },
+  
+  setSelectModo: function(modo) {
+    if (this.controles && this.controles.selectModo) {
+      this.controles.selectModo.value(modo);
+    }
   }
 };

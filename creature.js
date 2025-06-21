@@ -16,6 +16,8 @@ class CreatureManager {
       colisionesConBordes: 0,
       interaccionesConMouse: 0
     };
+    this.modoMovimiento = 'huir'; // 'automatico', 'huir', 'acercarse', 'manual'
+    this.direccionManual = { x: 0, y: 0 };
     
     this.init();
   }
@@ -145,25 +147,59 @@ class CreatureManager {
   }
   
   actualizarMovimiento() {
-    // Guardar posición anterior para detectar colisiones
     const posAnterior = { x: this.position.x, y: this.position.y };
-    
-    // Movimiento sinusoidal orgánico con variaciones
+    if (this.modoMovimiento === 'manual') {
+      // Movimiento manual con flechas
+      const velocidad = CONFIG.criatura.velocidadMovimiento * 1.2;
+      this.position.x += this.direccionManual.x * velocidad;
+      this.position.y += this.direccionManual.y * velocidad;
+      this.aplicarLimites(posAnterior);
+      return;
+    }
+    if (this.modoMovimiento === 'acercarse') {
+      // Si el mouse está cerca, acercarse
+      let distanciaAlMouse = dist(mouseX, mouseY, this.position.x, this.position.y);
+      if (distanciaAlMouse < CONFIG.interaccion.distanciaReaccion) {
+        let angulo = atan2(mouseY - this.position.y, mouseX - this.position.x);
+        let factorDistancia = 1 - (distanciaAlMouse / CONFIG.interaccion.distanciaReaccion);
+        let fuerza = CONFIG.interaccion.fuerzaEscape * factorDistancia;
+        this.position.x += cos(angulo) * fuerza;
+        this.position.y += sin(angulo) * fuerza;
+      }
+      // Además, movimiento orgánico
+      this.movimientoOrganico();
+      this.aplicarLimites(posAnterior);
+      return;
+    }
+    if (this.modoMovimiento === 'huir') {
+      // Movimiento orgánico + huir del mouse
+      this.movimientoOrganico();
+      // Huir del mouse si está cerca
+      let distanciaAlMouse = dist(mouseX, mouseY, this.position.x, this.position.y);
+      if (distanciaAlMouse < CONFIG.interaccion.distanciaReaccion) {
+        let anguloEscape = atan2(this.position.y - mouseY, this.position.x - mouseX);
+        let factorDistancia = 1 - (distanciaAlMouse / CONFIG.interaccion.distanciaReaccion);
+        let fuerzaEscape = CONFIG.interaccion.fuerzaEscape * factorDistancia;
+        this.position.x += cos(anguloEscape) * fuerzaEscape;
+        this.position.y += sin(anguloEscape) * fuerzaEscape;
+      }
+      this.aplicarLimites(posAnterior);
+      return;
+    }
+    // Modo automático: solo movimiento orgánico
+    this.movimientoOrganico();
+    this.aplicarLimites(posAnterior);
+  }
+  
+  movimientoOrganico() {
     let direccionX = cos(this.tiempo * 0.3) * cos(this.tiempo * 0.7);
     let direccionY = sin(this.tiempo * 0.4) * sin(this.tiempo * 0.6);
-    
-    // Añadir variación basada en ruido Perlin si está disponible
     if (typeof noise !== 'undefined') {
       direccionX += (noise(this.tiempo * 0.1, 0) - 0.5) * 0.5;
       direccionY += (noise(0, this.tiempo * 0.1) - 0.5) * 0.5;
     }
-    
-    // Aplicar movimiento
     this.position.x += direccionX * CONFIG.criatura.velocidadMovimiento;
     this.position.y += direccionY * CONFIG.criatura.velocidadMovimiento * 0.75;
-    
-    // Control de límites estrictos
-    this.aplicarLimites(posAnterior);
   }
   
   aplicarLimites(posAnterior) {
@@ -378,6 +414,7 @@ class CreatureManager {
   // ===== INTERACCIÓN =====
   
   reaccionarAlMouse(mouseX, mouseY) {
+    if (this.modoMovimiento !== 'huir') return; // Solo huir si está en modo huir
     // Reacción al mouse solo si no está sobre el panel
     if (CONFIG.ui.panel.visible && 
         mouseX > CONFIG.ui.panel.x && 
@@ -508,5 +545,17 @@ class CreatureManager {
     }
     
     Utils.log("Comportamiento cambiado a", modo);
+  }
+
+  setModoMovimiento(modo) {
+    this.modoMovimiento = modo;
+    if (modo !== 'manual') {
+      this.direccionManual = { x: 0, y: 0 };
+    }
+  }
+
+  moverManual(dx, dy) {
+    this.direccionManual.x = dx;
+    this.direccionManual.y = dy;
   }
 }

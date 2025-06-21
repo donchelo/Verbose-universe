@@ -5,6 +5,7 @@
 // Variables globales principales (declarar solo una vez)
 let criatura; // Cambié el nombre para evitar conflictos
 let isPaused = false;
+let teclasDireccion = { left: false, right: false, up: false, down: false };
 
 // ===== FUNCIÓN PRINCIPAL DE CONFIGURACIÓN =====
 function setup() {
@@ -140,6 +141,11 @@ function mousePressed() {
 // ===== EVENTOS DEL TECLADO =====
 function keyPressed() {
   try {
+    // Si el foco está en un input o select, no controlar el gusano
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT' || active.tagName === 'TEXTAREA')) {
+      return true; // Permitir el comportamiento normal del navegador
+    }
     // Pausa/resume con barra espaciadora
     if (key === ' ') {
       togglePause();
@@ -179,12 +185,68 @@ function keyPressed() {
       mostrarDebugInfo();
     }
     
+    // Cambiar modo con teclas rápidas
+    if (key === 'm' || key === 'M') {
+      criatura.setModoMovimiento('manual');
+      window.UIManager && window.UIManager.setSelectModo('manual');
+    }
+    if (key === 'h' || key === 'H') {
+      criatura.setModoMovimiento('huir');
+      window.UIManager && window.UIManager.setSelectModo('huir');
+    }
+    if (key === 'c' || key === 'C') {
+      criatura.setModoMovimiento('acercarse');
+      window.UIManager && window.UIManager.setSelectModo('acercarse');
+    }
+    if (key === 'u' || key === 'U' || key === 'a' || key === 'A') {
+      criatura.setModoMovimiento('automatico');
+      window.UIManager && window.UIManager.setSelectModo('automatico');
+    }
+    
+    // Flechas para control manual (fluido)
+    if (criatura.modoMovimiento === 'manual') {
+      if (keyCode === LEFT_ARROW) teclasDireccion.left = true;
+      if (keyCode === RIGHT_ARROW) teclasDireccion.right = true;
+      if (keyCode === UP_ARROW) teclasDireccion.up = true;
+      if (keyCode === DOWN_ARROW) teclasDireccion.down = true;
+      actualizarDireccionManual();
+    }
   } catch (error) {
     console.error("Error en keyPressed:", error);
   }
   
   // Prevenir comportamiento por defecto del navegador
   return false;
+}
+
+function keyReleased() {
+  // Si el foco está en un input o select, no controlar el gusano
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT' || active.tagName === 'TEXTAREA')) {
+    return true;
+  }
+  if (criatura && criatura.modoMovimiento === 'manual') {
+    if (keyCode === LEFT_ARROW) teclasDireccion.left = false;
+    if (keyCode === RIGHT_ARROW) teclasDireccion.right = false;
+    if (keyCode === UP_ARROW) teclasDireccion.up = false;
+    if (keyCode === DOWN_ARROW) teclasDireccion.down = false;
+    actualizarDireccionManual();
+  }
+}
+
+function actualizarDireccionManual() {
+  let dx = 0, dy = 0;
+  if (teclasDireccion.left) dx -= 1;
+  if (teclasDireccion.right) dx += 1;
+  if (teclasDireccion.up) dy -= 1;
+  if (teclasDireccion.down) dy += 1;
+  // Normalizar para que diagonal no sea más rápido
+  if (dx !== 0 || dy !== 0) {
+    let mag = Math.sqrt(dx*dx + dy*dy);
+    dx /= mag;
+    dy /= mag;
+  }
+  criatura.moverManual(dx, dy);
 }
 
 // ===== FUNCIONES DE CONTROL =====
