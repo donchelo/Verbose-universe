@@ -305,7 +305,6 @@ window.UIManager = {
   
   actualizarConfiguracion: function() {
     if (!this.controles.numeroSegmentos || !window.CONFIG) return;
-    
     // Actualizar configuración desde los controles
     window.CONFIG.criatura.numeroSegmentos = this.controles.numeroSegmentos.value();
     window.CONFIG.criatura.distanciaSegmentos = this.controles.distanciaSegmentos.value();
@@ -315,13 +314,16 @@ window.UIManager = {
     window.CONFIG.criatura.velocidadMovimiento = this.controles.velocidadMovimiento.value();
     window.CONFIG.criatura.velocidadOndulacion = this.controles.amplitudOndulacion.value();
     window.CONFIG.criatura.velocidadRespiracion = this.controles.amplitudRespiracion.value();
-    window.CONFIG.criatura.amplitudDeformacion[0] = this.controles.grosorContorno.value();
+    window.CONFIG.criatura.grosorContorno = this.controles.grosorContorno.value();
     window.CONFIG.criatura.cabeza.numeroTentaculos = this.controles.numeroTentaculos.value();
     window.CONFIG.criatura.cabeza.longitudTentaculos = this.controles.longitudTentaculos.value();
     window.CONFIG.criatura.cabeza.amplitudMovimiento = this.controles.amplitudMovTent.value();
     window.CONFIG.criatura.color[0] = this.controles.colorR.value();
     window.CONFIG.criatura.color[1] = this.controles.colorG.value();
     window.CONFIG.criatura.color[2] = this.controles.colorB.value();
+    if (window.creature && typeof window.creature.recalcularFormasSegmentos === 'function') {
+      window.creature.recalcularFormasSegmentos();
+    }
   },
   
   // ===== DIBUJO =====

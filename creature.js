@@ -45,18 +45,25 @@ class CreatureManager {
   calcularTamañosTercios() {
     // Proporción áurea para tamaños de segmentos
     this.terciosSizes = [];
-    let base = CONFIG.criatura.tamaños.grande;
-    let ratio = 0.62; // Golden ratio
-    for (let i = 0; i < CONFIG.criatura.numeroSegmentos; i++) {
-      this.terciosSizes.push(base);
-      base *= ratio;
+    const n = CONFIG.criatura.numeroSegmentos;
+    const grande = CONFIG.criatura.tamaños.grande;
+    const ratio = 0.618; // Proporción áurea
+    let size = grande;
+    for (let i = 0; i < n; i++) {
+      this.terciosSizes.push(size);
+      size *= ratio;
     }
   }
   
   inicializarSegmentos() {
     this.segmentos = [];
-    
     for (let i = 0; i < CONFIG.criatura.numeroSegmentos; i++) {
+      // Asignar la forma solo una vez, de manera pseudoaleatoria pero fija
+      let valor = Math.abs(Math.sin(i * 1.7 + this.position.x * 0.01 + this.position.y * 0.01));
+      let forma;
+      if (valor < 0.33) forma = 'circulo';
+      else if (valor < 0.66) forma = 'cuadrado';
+      else forma = 'triangulo';
       this.segmentos.push({
         x: this.position.x - i * CONFIG.criatura.distanciaSegmentos,
         y: this.position.y,
@@ -65,7 +72,8 @@ class CreatureManager {
         velocidadX: 0,
         velocidadY: 0,
         anguloRotacion: 0,
-        energia: 1.0
+        energia: 1.0,
+        forma
       });
     }
   }
@@ -122,13 +130,17 @@ class CreatureManager {
   
   ajustarNumeroSegmentos() {
     const diferencia = CONFIG.criatura.numeroSegmentos - this.segmentos.length;
-    
     if (diferencia > 0) {
       // Añadir segmentos
       for (let i = 0; i < diferencia; i++) {
         const ultimoSegmento = this.segmentos[this.segmentos.length - 1];
         const nuevoIndice = this.segmentos.length;
-        
+        // Asignar la forma solo una vez, de manera pseudoaleatoria pero fija
+        let valor = Math.abs(Math.sin(nuevoIndice * 1.7 + ultimoSegmento.x * 0.01 + ultimoSegmento.y * 0.01));
+        let forma;
+        if (valor < 0.33) forma = 'circulo';
+        else if (valor < 0.66) forma = 'cuadrado';
+        else forma = 'triangulo';
         this.segmentos.push({
           x: ultimoSegmento.x - CONFIG.criatura.distanciaSegmentos,
           y: ultimoSegmento.y,
@@ -137,7 +149,8 @@ class CreatureManager {
           velocidadX: 0,
           velocidadY: 0,
           anguloRotacion: 0,
-          energia: 1.0
+          energia: 1.0,
+          forma
         });
       }
     } else if (diferencia < 0) {
@@ -364,12 +377,24 @@ class CreatureManager {
     for (let i = 0; i < min(CONFIG.criatura.numeroSegmentos, this.segmentos.length); i++) {
       let seg = this.segmentos[i];
       if (!seg) continue;
-      // Minimalismo: sin deformación ni textura
       let tamaño = seg.tamaño;
       fill(CONFIG.criatura.color[0], CONFIG.criatura.color[1], CONFIG.criatura.color[2], 220);
       push();
       translate(seg.x, seg.y);
-      ellipse(0, 0, tamaño, tamaño);
+      let forma = seg.forma || 'circulo';
+      if (forma === 'cuadrado') {
+        rectMode(CENTER);
+        rect(0, 0, tamaño, tamaño);
+      } else if (forma === 'triangulo') {
+        let h = tamaño * Math.sqrt(3) / 2;
+        beginShape();
+        vertex(-tamaño/2, h/3);
+        vertex(tamaño/2, h/3);
+        vertex(0, -2*h/3);
+        endShape(CLOSE);
+      } else { // círculo por defecto
+        ellipse(0, 0, tamaño, tamaño);
+      }
       pop();
     }
   }
@@ -379,18 +404,38 @@ class CreatureManager {
     let cabeza = this.segmentos[0];
     push();
     translate(cabeza.x, cabeza.y);
-    // Cabeza: círculo más grande, sin detalles orgánicos
+    // Dibujar tentáculos antes de la cabeza
+    let config = CONFIG.criatura.cabeza;
+    for (let i = 0; i < config.numeroTentaculos; i++) {
+      this.dibujarTentaculo(i, config);
+    }
     stroke(30, 30, 30);
     strokeWeight(CONFIG.criatura.grosorContorno + 1);
     fill(CONFIG.criatura.color[0], CONFIG.criatura.color[1], CONFIG.criatura.color[2], 240);
-    ellipse(0, 0, cabeza.tamaño * 1.15, cabeza.tamaño * 1.15);
-    // Ojos minimalistas
-    let sep = cabeza.tamaño * 0.22;
-    let ojoR = cabeza.tamaño * 0.13;
-    fill(30, 30, 30);
-    noStroke();
-    ellipse(-sep, -ojoR, ojoR, ojoR);
-    ellipse(sep, -ojoR, ojoR, ojoR);
+    let tamaño = cabeza.tamaño * 1.15;
+    let forma = cabeza.forma || 'circulo';
+    if (forma === 'cuadrado') {
+      rectMode(CENTER);
+      rect(0, 0, tamaño, tamaño);
+    } else if (forma === 'triangulo') {
+      let h = tamaño * Math.sqrt(3) / 2;
+      beginShape();
+      vertex(-tamaño/2, h/3);
+      vertex(tamaño/2, h/3);
+      vertex(0, -2*h/3);
+      endShape(CLOSE);
+    } else {
+      ellipse(0, 0, tamaño, tamaño);
+    }
+    // Ojos minimalistas (solo si es círculo o cuadrado)
+    if (forma !== 'triangulo') {
+      let sep = cabeza.tamaño * 0.22;
+      let ojoR = cabeza.tamaño * 0.13;
+      fill(30, 30, 30);
+      noStroke();
+      ellipse(-sep, -ojoR, ojoR, ojoR);
+      ellipse(sep, -ojoR, ojoR, ojoR);
+    }
     pop();
   }
   
@@ -557,5 +602,15 @@ class CreatureManager {
   moverManual(dx, dy) {
     this.direccionManual.x = dx;
     this.direccionManual.y = dy;
+  }
+
+  recalcularFormasSegmentos() {
+    // No cambiar la forma si ya existe, solo recalcular tamaños
+    this.calcularTamañosTercios();
+    for (let i = 0; i < this.segmentos.length; i++) {
+      let seg = this.segmentos[i];
+      if (!seg) continue;
+      seg.tamaño = this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño;
+    }
   }
 }
