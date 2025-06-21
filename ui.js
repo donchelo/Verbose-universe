@@ -107,6 +107,8 @@ window.UIManager = {
     tentaculosLabel.style('font-size', '13px');
     this.controles.numeroTentaculos = this.crearSlider(0, 0, 120, 12, 2, 8, window.CONFIG.criatura.cabeza.numeroTentaculos, "Número de tentáculos");
     this.controles.longitudTentaculos = this.crearSlider(0, 0, 120, 12, 15, 60, window.CONFIG.criatura.cabeza.longitudTentaculos, "Longitud tentáculos");
+    this.controles.grosorTentaculos = this.crearSlider(0, 0, 120, 12, 1, 10, window.CONFIG.criatura.cabeza.grosorTentaculos, "Grosor tentáculos");
+    this.controles.tamañoPuntas = this.crearSlider(0, 0, 120, 12, 2, 20, window.CONFIG.criatura.cabeza.tamañoPuntas, "Tamaño punta tentáculo");
     this.controles.amplitudMovTent = this.crearSlider(0, 0, 120, 12, 0.1, 1, window.CONFIG.criatura.cabeza.amplitudMovimiento, "Movimiento tentáculos");
 
     // === MOVIMIENTO ===
@@ -317,6 +319,8 @@ window.UIManager = {
     window.CONFIG.criatura.grosorContorno = this.controles.grosorContorno.value();
     window.CONFIG.criatura.cabeza.numeroTentaculos = this.controles.numeroTentaculos.value();
     window.CONFIG.criatura.cabeza.longitudTentaculos = this.controles.longitudTentaculos.value();
+    window.CONFIG.criatura.cabeza.grosorTentaculos = this.controles.grosorTentaculos.value();
+    window.CONFIG.criatura.cabeza.tamañoPuntas = this.controles.tamañoPuntas.value();
     window.CONFIG.criatura.cabeza.amplitudMovimiento = this.controles.amplitudMovTent.value();
     window.CONFIG.criatura.color[0] = this.controles.colorR.value();
     window.CONFIG.criatura.color[1] = this.controles.colorG.value();
@@ -435,6 +439,8 @@ window.UIManager = {
     // Tentáculos
     this.controles.numeroTentaculos.value(floor(window.Utils.random(2, 9)));
     this.controles.longitudTentaculos.value(window.Utils.random(15, 60));
+    this.controles.grosorTentaculos.value(window.Utils.random(1, 10));
+    this.controles.tamañoPuntas.value(window.Utils.random(2, 20));
     this.controles.amplitudMovTent.value(window.Utils.random(0.1, 1));
     // Movimiento
     this.controles.velocidadMovimiento.value(window.Utils.random(0.5, 6));

@@ -406,8 +406,21 @@ class CreatureManager {
     translate(cabeza.x, cabeza.y);
     // Dibujar tentáculos antes de la cabeza
     let config = CONFIG.criatura.cabeza;
+    let t = (typeof this.tiempo !== 'undefined') ? this.tiempo : 0;
     for (let i = 0; i < config.numeroTentaculos; i++) {
-      this.dibujarTentaculo(i, config);
+      // Animación: cada tentáculo oscila usando amplitudMovimiento y el tiempo
+      let anguloBase = (PI * 2 / config.numeroTentaculos) * i - PI/2;
+      let desfase = sin(t * config.amplitudMovimiento + i) * 0.4;
+      let angulo = anguloBase + desfase;
+      let longitud = cabeza.tamaño * 0.8 + config.longitudTentaculos; // Proporcional a la cabeza
+      let x2 = cos(angulo) * longitud;
+      let y2 = sin(angulo) * longitud;
+      stroke(30, 30, 30);
+      strokeWeight(config.grosorTentaculos);
+      line(0, 0, x2, y2);
+      fill(30, 30, 30);
+      noStroke();
+      ellipse(x2, y2, config.tamañoPuntas, config.tamañoPuntas);
     }
     stroke(30, 30, 30);
     strokeWeight(CONFIG.criatura.grosorContorno + 1);
@@ -437,19 +450,6 @@ class CreatureManager {
       ellipse(sep, -ojoR, ojoR, ojoR);
     }
     pop();
-  }
-  
-  dibujarTentaculo(indice, config) {
-    // Tentáculo minimalista: línea simple con punta geométrica
-    let anguloBase = (PI * 2 / config.numeroTentaculos) * indice - PI/2;
-    let x2 = cos(anguloBase) * config.longitudTentaculos;
-    let y2 = sin(anguloBase) * config.longitudTentaculos;
-    stroke(30, 30, 30);
-    strokeWeight(config.grosorTentaculos);
-    line(0, 0, x2, y2);
-    fill(30, 30, 30);
-    noStroke();
-    ellipse(x2, y2, config.tamañoPuntas, config.tamañoPuntas);
   }
   
   dibujarDetalles() {
