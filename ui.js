@@ -9,6 +9,8 @@ if (typeof window !== 'undefined') {
 
 // === NUEVO PANEL HTML ===
 let panelDiv;
+let botonFlotante;
+let controlesContainer; // NUEVO: Contenedor solo para los controles que se actualizan
 
 // Administrador de la interfaz de usuario
 window.UIManager = {
@@ -25,7 +27,8 @@ window.UIManager = {
       console.error("CONFIG no está disponible en UIManager.init");
       return;
     }
-    // Crear panel HTML real solo una vez
+    
+    // Crear panel principal (solo una vez)
     if (!panelDiv) {
       panelDiv = createDiv();
       panelDiv.class('p5ControlPanel');
@@ -36,45 +39,84 @@ window.UIManager = {
       panelDiv.style('background', 'rgba(255,255,255,0.97)');
       panelDiv.style('border', '1px solid #ddd');
       panelDiv.style('border-radius', '6px');
-      panelDiv.style('padding', '16px 12px 12px 12px');
+      panelDiv.style('padding', '12px');
       panelDiv.style('box-shadow', '0 2px 8px rgba(0,0,0,0.04)');
       panelDiv.style('min-width', '260px');
       panelDiv.style('max-width', '340px');
       panelDiv.style('max-height', '90vh');
-      panelDiv.style('overflow-y', 'auto');
+      panelDiv.style('display', 'flex');
+      panelDiv.style('flex-direction', 'column');
       panelDiv.id('p5-panel');
     } else {
-      panelDiv.html(''); // Limpiar si ya existe
+      panelDiv.html(''); // Limpiar si ya existe para reinicio
     }
-    // Título y botón cerrar
+
+    // --- Header Fijo ---
     let header = createDiv();
     header.parent(panelDiv);
     header.style('display', 'flex');
     header.style('align-items', 'center');
     header.style('justify-content', 'space-between');
     header.style('margin-bottom', '10px');
+    header.style('padding-bottom', '5px');
+    header.style('border-bottom', '1px solid #eee');
+    
     let titulo = createSpan('CONTROLS');
     titulo.style('font-weight', 'bold');
     titulo.style('font-size', '16px');
     titulo.parent(header);
-    let cerrar = createButton('×');
-    cerrar.parent(header);
-    cerrar.style('font-size', '16px');
-    cerrar.style('background', 'none');
-    cerrar.style('border', 'none');
-    cerrar.style('color', '#444');
-    cerrar.style('cursor', 'pointer');
-    cerrar.mousePressed(() => {
-      panelDiv.hide();
-      this.panelVisible = false;
-      window.CONFIG.ui.panel.visible = false;
-    });
+    
+    let minimizar = createButton('_');
+    minimizar.parent(header);
+    minimizar.style('font-size', '16px');
+    minimizar.style('font-weight', 'bold');
+    minimizar.style('line-height', '10px');
+    minimizar.style('background', 'none');
+    minimizar.style('border', 'none');
+    minimizar.style('color', '#444');
+    minimizar.style('cursor', 'pointer');
+    minimizar.mousePressed(() => this.togglePanel());
+
+    // --- Contenedor para Controles ---
+    controlesContainer = createDiv();
+    controlesContainer.parent(panelDiv);
+    controlesContainer.id('controles-container');
+    controlesContainer.style('overflow-y', 'auto');
+    controlesContainer.style('padding-right', '5px'); // Para que la scrollbar no tape contenido
+
+    // --- Crear el botón flotante para restaurar (solo una vez) ---
+    if (!botonFlotante) {
+      botonFlotante = createButton('');
+      botonFlotante.html('&#9633;'); // Carácter de cuadrado para restaurar
+      botonFlotante.id('boton-flotante-panel');
+      botonFlotante.style('position', 'fixed');
+      botonFlotante.style('top', '20px');
+      botonFlotante.style('left', '20px');
+      botonFlotante.style('z-index', '9999');
+      botonFlotante.style('font-size', '18px');
+      botonFlotante.style('line-height', '20px');
+      botonFlotante.style('color', '#333');
+      botonFlotante.style('background', '#fff');
+      botonFlotante.style('border', '1px solid #bbb');
+      botonFlotante.style('border-radius', '5px');
+      botonFlotante.style('width', '38px');
+      botonFlotante.style('height', '38px');
+      botonFlotante.style('box-shadow', '0 2px 8px rgba(0,0,0,0.08)');
+      botonFlotante.style('cursor', 'pointer');
+      botonFlotante.mousePressed(() => this.togglePanel());
+      document.body.appendChild(botonFlotante.elt);
+    }
+    
+    // Crear contenido del panel
     this.panelVisible = window.CONFIG.ui.panel.visible;
     this.crearControles();
     this.crearBotones();
     this.aplicarEstilosCSS();
-    panelDiv.show();
-    console.log("✓ UI inicializada");
+    
+    // Sincronizar estado inicial
+    this.setPanelVisible(this.panelVisible);
+    
+    console.log("✓ UI inicializada desde cero");
   },
   
   // ===== CREACIÓN DE CONTROLES =====
@@ -84,12 +126,12 @@ window.UIManager = {
       console.error("CONFIG o CONSTANTES no están disponibles para crear controles");
       return;
     }
-    // Limpiar panel antes de agregar controles
-    panelDiv.html(panelDiv.elt.innerHTML.split('<div')[0]);
+    // Limpiar SOLO el contenedor de controles. El header no se toca.
+    controlesContainer.html('');
 
     // === ESTRUCTURA ===
     let estructuraLabel = createDiv('Estructura');
-    estructuraLabel.parent(panelDiv);
+    estructuraLabel.parent(controlesContainer);
     estructuraLabel.style('font-weight', 'bold');
     estructuraLabel.style('margin', '10px 0 4px 0');
     estructuraLabel.style('font-size', '13px');
@@ -101,7 +143,7 @@ window.UIManager = {
 
     // === TENTÁCULOS ===
     let tentaculosLabel = createDiv('Tentáculos');
-    tentaculosLabel.parent(panelDiv);
+    tentaculosLabel.parent(controlesContainer);
     tentaculosLabel.style('font-weight', 'bold');
     tentaculosLabel.style('margin', '10px 0 4px 0');
     tentaculosLabel.style('font-size', '13px');
@@ -113,7 +155,7 @@ window.UIManager = {
 
     // === MOVIMIENTO ===
     let movLabel = createDiv('Movimiento');
-    movLabel.parent(panelDiv);
+    movLabel.parent(controlesContainer);
     movLabel.style('font-weight', 'bold');
     movLabel.style('margin', '10px 0 4px 0');
     movLabel.style('font-size', '13px');
@@ -123,7 +165,7 @@ window.UIManager = {
 
     // === APARIENCIA ===
     let aparLabel = createDiv('Apariencia');
-    aparLabel.parent(panelDiv);
+    aparLabel.parent(controlesContainer);
     aparLabel.style('font-weight', 'bold');
     aparLabel.style('margin', '10px 0 4px 0');
     aparLabel.style('font-size', '13px');
@@ -132,12 +174,12 @@ window.UIManager = {
 
     // === MODO DE MOVIMIENTO ===
     let modoLabel = createDiv('Modo de movimiento');
-    modoLabel.parent(panelDiv);
+    modoLabel.parent(controlesContainer);
     modoLabel.style('font-weight', 'bold');
     modoLabel.style('margin', '10px 0 4px 0');
     modoLabel.style('font-size', '13px');
     let selectModo = createSelect();
-    selectModo.parent(panelDiv);
+    selectModo.parent(controlesContainer);
     selectModo.option('Huir del mouse', 'huir');
     selectModo.option('Acercarse al mouse', 'acercarse');
     selectModo.option('Automático', 'automatico');
@@ -154,7 +196,7 @@ window.UIManager = {
   crearSlider: function(x, y, w, h, min, max, val, label) {
     // Crear contenedor para el slider y la etiqueta
     let container = createDiv();
-    container.parent(panelDiv);
+    container.parent(controlesContainer);
     container.style('display', 'flex');
     container.style('flex-direction', 'row');
     container.style('align-items', 'center');
@@ -201,22 +243,10 @@ window.UIManager = {
       console.error("CONFIG no está disponible para crear botones");
       return;
     }
-    
-    let controlConfig = window.CONFIG.ui.controles;
-    
-    // Botón toggle panel
-    this.botones.toggle = createButton('×');
-    this.botones.toggle.parent(panelDiv);
-    this.botones.toggle.style('font-size', '16px');
-    this.botones.toggle.style('background', 'none');
-    this.botones.toggle.style('border', 'none');
-    this.botones.toggle.style('color', '#444');
-    this.botones.toggle.style('cursor', 'pointer');
-    this.botones.toggle.mousePressed(() => this.togglePanel());
-    
+        
     // Botón Random destacado
     let randomBtn = createButton('Random');
-    randomBtn.parent(panelDiv);
+    randomBtn.parent(controlesContainer);
     randomBtn.style('width', '100%');
     randomBtn.style('margin', '16px 0 8px 0');
     randomBtn.style('font-size', '15px');
@@ -251,8 +281,21 @@ window.UIManager = {
       .p5ControlPanel {
         min-width: 260px !important;
         max-width: 98vw !important;
-        overflow-y: auto !important;
         box-sizing: border-box !important;
+      }
+      #controles-container::-webkit-scrollbar {
+        width: 6px;
+      }
+      #controles-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+      #controles-container::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+      }
+      #controles-container::-webkit-scrollbar-thumb:hover {
+        background: #999;
       }
       input[type="range"] {
         -webkit-appearance: none !important;
@@ -328,42 +371,12 @@ window.UIManager = {
   // ===== DIBUJO =====
   
   dibujar: function() {
-    if (this.panelVisible) {
-      this.dibujarPanel();
-    }
+    // El panel HTML ahora se gestiona con show/hide, no se redibuja en p5.
     this.dibujarInfo();
   },
   
   dibujarPanel: function() {
-    if (!window.CONFIG) return;
-    
-    // Fondo del panel
-    fill(...window.CONFIG.ui.colores.fondo);
-    stroke(...window.CONFIG.ui.colores.borde);
-    strokeWeight(1);
-    rect(window.CONFIG.ui.panel.x, window.CONFIG.ui.panel.y, window.CONFIG.ui.panel.width, window.CONFIG.ui.panel.height, 3);
-    
-    // Título
-    fill(...window.CONFIG.ui.colores.texto);
-    noStroke();
-    textAlign(LEFT);
-    textSize(11);
-    textStyle(BOLD);
-    text("CONTROLS", window.CONFIG.ui.panel.x + 8, window.CONFIG.ui.panel.y + 18);
-    
-    // Etiquetas de secciones
-    textSize(9);
-    textStyle(NORMAL);
-    fill(...window.CONFIG.ui.colores.textoSecundario);
-    
-    let yPos = window.CONFIG.ui.panel.y + 42;
-    text("Structure", window.CONFIG.ui.panel.x + 135, yPos);
-    text("Motion", window.CONFIG.ui.panel.x + 135, yPos + 108);
-    text("Breath", window.CONFIG.ui.panel.x + 135, yPos + 148);
-    text("Deform", window.CONFIG.ui.panel.x + 135, yPos + 188);
-    text("Tentacles", window.CONFIG.ui.panel.x + 135, yPos + 228);
-    text("Interact", window.CONFIG.ui.panel.x + 135, yPos + 268);
-    text("Color", window.CONFIG.ui.panel.x + 135, yPos + 308);
+    // Esta función ya no es necesaria, el panel es HTML y se gestiona con CSS y DOM.
   },
   
   dibujarInfo: function() {
@@ -396,20 +409,22 @@ window.UIManager = {
   
   // ===== FUNCIONES DE CONTROL =====
   
-  togglePanel: function() {
-    this.panelVisible = !this.panelVisible;
+  setPanelVisible: function(visible) {
+    this.panelVisible = visible;
     if (window.CONFIG) {
       window.CONFIG.ui.panel.visible = this.panelVisible;
     }
     if (this.panelVisible) {
       panelDiv.show();
+      if (botonFlotante) botonFlotante.hide();
     } else {
       panelDiv.hide();
+      if (botonFlotante) botonFlotante.show();
     }
-    if (this.botones.toggle) {
-      this.botones.toggle.html(this.panelVisible ? '×' : '○');
-    }
-    this.toggleControles();
+  },
+
+  togglePanel: function() {
+    this.setPanelVisible(!this.panelVisible);
     console.log("Panel toggle:", this.panelVisible);
   },
   
@@ -502,7 +517,7 @@ window.UIManager = {
   crearColorPickerHSV: function() {
     // Contenedor visual
     let container = createDiv();
-    container.parent(panelDiv);
+    container.parent(controlesContainer);
     container.style('display', 'flex');
     container.style('flex-direction', 'column');
     container.style('align-items', 'center');
@@ -587,14 +602,21 @@ window.UIManager = {
     selector.style('border-radius', '50%');
     selector.style('box-shadow', '0 0 2px #000');
     selector.style('pointer-events', 'none');
+    
     function updateSelectorPos() {
       selector.style('left', (size/2 + hsv[1]*Math.cos(hsv[0]*2*Math.PI)*size/2 - 7) + 'px');
       selector.style('top', (size/2 + hsv[1]*Math.sin(hsv[0]*2*Math.PI)*size/2 - 7) + 'px');
     }
     updateSelectorPos();
 
+    window.UIManager._actualizarColorPickerVisual = () => {
+      hsv = window.UIManager._colorPickerHSV;
+      drawColorWheelHTML(hsv[2]);
+      updateSelectorPos();
+    };
+
     // Interacción con la rueda de color
-    colorCanvas.addEventListener('mousedown', function(e) {
+    function handleColorSelection(e) {
       let rect = colorCanvas.getBoundingClientRect();
       let x = e.clientX - rect.left;
       let y = e.clientY - rect.top;
@@ -616,47 +638,44 @@ window.UIManager = {
         window.CONFIG.criatura.color[2] = rgb[2];
         window.UIManager._colorPickerHSV = [hue, sat, hsv[2]];
       }
+    }
+    colorCanvas.addEventListener('mousedown', (e) => {
+      handleColorSelection(e);
+      document.addEventListener('mousemove', handleColorSelection);
+      document.addEventListener('mouseup', () => {
+        document.removeEventListener('mousemove', handleColorSelection);
+      }, { once: true });
     });
 
+
     // Slider de brillo (valor)
+    let brilloSliderContainer = createDiv();
+    brilloSliderContainer.parent(container);
+    brilloSliderContainer.style('display', 'flex');
+    brilloSliderContainer.style('align-items', 'center');
+    brilloSliderContainer.style('width', '100%');
+    brilloSliderContainer.style('max-width', '160px');
+    brilloSliderContainer.style('justify-content', 'space-between');
+    brilloSliderContainer.style('margin-top', '8px');
+
     let brilloLabel = createSpan('Brillo:');
     brilloLabel.style('font-size', '11px');
     brilloLabel.style('color', '#444');
     brilloLabel.style('margin-right', '6px');
-    brilloLabel.parent(container);
+    brilloLabel.parent(brilloSliderContainer);
+
     let brilloSlider = createSlider(0, 1, hsv[2], 0.01);
-    brilloSlider.parent(container);
-    brilloSlider.style('width', '80px');
-    brilloSlider.input(function() {
-      hsv[2] = brilloSlider.value();
-      window.UIManager._colorPickerValue = hsv[2];
-      drawColorWheelHTML(hsv[2]);
-      // Actualizar color
-      let rgb = Utils.hsvToRgb(hsv[0], hsv[1], hsv[2]);
+    brilloSlider.parent(brilloSliderContainer);
+    brilloSlider.style('width', '100px');
+    brilloSlider.input(() => {
+      let v = brilloSlider.value();
+      hsv[2] = v;
+      window.UIManager._colorPickerValue = v;
+      drawColorWheelHTML(v);
+      let rgb = Utils.hsvToRgb(hsv[0], hsv[1], v);
       window.CONFIG.criatura.color[0] = rgb[0];
       window.CONFIG.criatura.color[1] = rgb[1];
       window.CONFIG.criatura.color[2] = rgb[2];
-      window.UIManager._colorPickerHSV = [hsv[0], hsv[1], hsv[2]];
-      updateSelectorPos();
     });
-    // Inicializar color
-    let rgb = Utils.hsvToRgb(hsv[0], hsv[1], hsv[2]);
-    window.CONFIG.criatura.color[0] = rgb[0];
-    window.CONFIG.criatura.color[1] = rgb[1];
-    window.CONFIG.criatura.color[2] = rgb[2];
-    window.UIManager._colorPickerHSV = [hsv[0], hsv[1], hsv[2]];
-    updateSelectorPos();
-
-    // Permitir actualización visual externa (para randomizar)
-    window.UIManager._actualizarColorPickerVisual = function() {
-      let hsvActual = window.UIManager._colorPickerHSV || [0,0,1];
-      drawColorWheelHTML(hsvActual[2]);
-      brilloSlider.value(hsvActual[2]);
-      selector.style('left', (size/2 + hsvActual[1]*Math.cos(hsvActual[0]*2*Math.PI)*size/2 - 7) + 'px');
-      selector.style('top', (size/2 + hsvActual[1]*Math.sin(hsvActual[0]*2*Math.PI)*size/2 - 7) + 'px');
-    };
-
-    // --- Sincronizar visualmente al crear el picker ---
-    window.UIManager._actualizarColorPickerVisual();
   }
 };
