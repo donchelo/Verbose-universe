@@ -188,7 +188,10 @@ window.UIManager = {
       valorSpan.html(slider.value());
       window.UIManager.actualizarConfiguracion();
     });
-    return slider;
+    // Devolver ambos para poder sincronizar visualmente
+    let control = slider;
+    control._valorSpan = valorSpan;
+    return control;
   },
   
   // ===== CREACIÓN DE BOTONES =====
@@ -442,6 +445,17 @@ window.UIManager = {
     this.controles.grosorContorno.value(window.Utils.random(1, 8));
     // Actualizar config
     this.actualizarConfiguracion();
+    this.sincronizarValoresVisuales();
+  },
+  
+  // ===== SINCRONIZAR VALORES VISUALES =====
+  sincronizarValoresVisuales: function() {
+    for (let key in this.controles) {
+      let control = this.controles[key];
+      if (control && control._valorSpan) {
+        control._valorSpan.html(control.value());
+      }
+    }
   },
   
   // ===== APLICAR PRESET =====
@@ -452,6 +466,7 @@ window.UIManager = {
         this.controles[param].value(valores[param]);
       }
     }
+    this.sincronizarValoresVisuales();
     console.log("Valores aplicados desde preset");
   },
   
