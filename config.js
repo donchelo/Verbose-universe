@@ -40,6 +40,7 @@ window.CONFIG = {
     amplitudOndulacion: 15,
     velocidadOndulacion: 3,
     factorDesfase: 0.8,
+    texturaSuperficie: 0.2, // Factor de "rugosidad" o detalle en el movimiento
     
     // Respiración/pulsación
     velocidadRespiracion: 4,
@@ -63,6 +64,42 @@ window.CONFIG = {
       tamañoPuntas: 4,
       amplitudMovimiento: 0.3,
       velocidadMovimiento: 3
+    },
+    // Tentáculos en cada segmento
+    tentaculosPorSegmento: true,
+    tentaculosBase: 2, // Mínimo tentáculos por segmento
+    tentaculosFactorTamaño: 0.08, // Tentáculos extra por cada 10 de tamaño
+    elasticidad: 0.5, // 0 a 1
+    bioluminiscencia: 0.3, // 0 a 1
+    patronTentaculos: 'normal', // 'normal', 'doble', 'espiral', etc.
+
+    // Parámetros para el movimiento dinámico de tentáculos, inspirado en arte generativo
+    tentaculoDinamico: {
+      activo: true, // para poder prender/apagar este efecto
+      desfaseFinalFactor: 0.1, // Multiplicador final para controlar la intensidad del efecto
+
+      // Parámetros para 'k'
+      k_factor1: 4,
+      k_factor2: 3,
+      k_y_freq: 0.05, // Frecuencia de la onda en y
+      k_x_freq: 0.01, // Frecuencia de la onda en x
+
+      // Parámetro para 'd' (distancia)
+      d_dist_factor: 0.01,
+
+      // Parámetro para 'e'
+      e_y_factor: 0.125,
+
+      // Parámetros para 'q' (la fórmula compleja de oscilación)
+      q_sin_k_amp: 3,
+      q_sin_k_freq: 2,
+      q_inv_k_amp: 0.3,
+      q_sin_y_freq: 0.04,
+      q_noise_amp1: 9,
+      q_noise_amp2: 4,
+      q_noise_e_freq: 9,
+      q_noise_d_freq: 3,
+      q_noise_t_freq: 2
     }
   },
   

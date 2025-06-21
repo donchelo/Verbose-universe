@@ -73,7 +73,11 @@ class CreatureManager {
         velocidadY: 0,
         anguloRotacion: 0,
         energia: 1.0,
-        forma
+        forma,
+        elasticidad: CONFIG.criatura.elasticidad,
+        bioluminiscencia: CONFIG.criatura.bioluminiscencia,
+        patronTentaculos: CONFIG.criatura.patronTentaculos,
+        tentaculos: Math.max(CONFIG.criatura.tentaculosBase, Math.round((this.terciosSizes[i] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.tentaculosFactorTamaño)),
       });
     }
   }
@@ -150,7 +154,11 @@ class CreatureManager {
           velocidadY: 0,
           anguloRotacion: 0,
           energia: 1.0,
-          forma
+          forma,
+          elasticidad: CONFIG.criatura.elasticidad,
+          bioluminiscencia: CONFIG.criatura.bioluminiscencia,
+          patronTentaculos: CONFIG.criatura.patronTentaculos,
+          tentaculos: Math.max(CONFIG.criatura.tentaculosBase, Math.round((this.terciosSizes[nuevoIndice] || CONFIG.criatura.tamaños.pequeño) * CONFIG.criatura.tentaculosFactorTamaño)),
         });
       }
     } else if (diferencia < 0) {
@@ -286,9 +294,16 @@ class CreatureManager {
     let anguloHaciaObjetivo = atan2(objetivo.y - segmentoActual.y, objetivo.x - segmentoActual.x);
     
     // Ondulación perpendicular con variación por segmento
-    let ondulacion = sin(this.tiempo * CONFIG.criatura.velocidadOndulacion + segmentoActual.fase) 
-                     * CONFIG.criatura.amplitudOndulacion;
-    let anguloOndulacion = anguloHaciaObjetivo + PI/2;
+    let ondulacionBase = sin(this.tiempo * CONFIG.criatura.velocidadOndulacion + segmentoActual.fase) *
+      CONFIG.criatura.amplitudOndulacion;
+
+    // Detalle de textura inspirado en arte generativo
+    let k = cos(segmentoActual.x * 0.1) + sin(segmentoActual.y * 0.1 - this.tiempo);
+    let textura = sin(k * 5 + this.tiempo * 2) * CONFIG.criatura.amplitudOndulacion * CONFIG.criatura.texturaSuperficie;
+
+    let ondulacion = ondulacionBase + textura;
+
+    let anguloOndulacion = anguloHaciaObjetivo + PI / 2;
     
     // Factor de ondulación que decrece hacia la cola
     let factorOndulacion = (i / CONFIG.criatura.numeroSegmentos);
@@ -395,6 +410,41 @@ class CreatureManager {
       } else { // círculo por defecto
         ellipse(0, 0, tamaño, tamaño);
       }
+      // Dibujar tentáculos para cada segmento
+      if (CONFIG.criatura.tentaculosPorSegmento && seg.tentaculos > 0) {
+        let t = (typeof this.tiempo !== 'undefined') ? this.tiempo : 0;
+        let num = seg.tentaculos;
+        let longitud = seg.tamaño * 0.7 + CONFIG.criatura.cabeza.longitudTentaculos * (seg.tamaño / CONFIG.criatura.tamaños.grande);
+        let grosor = CONFIG.criatura.cabeza.grosorTentaculos * (seg.tamaño / CONFIG.criatura.tamaños.grande);
+        let punta = CONFIG.criatura.cabeza.tamañoPuntas * (seg.tamaño / CONFIG.criatura.tamaños.grande);
+        for (let j = 0; j < num; j++) {
+          let anguloBase = (PI * 2 / num) * j - PI / 2;
+          let desfase = 0;
+          if (CONFIG.criatura.tentaculoDinamico.activo) {
+            desfase = this.calcularDesfaseTentaculo(seg, j, t, i);
+          } else {
+            // Comportamiento anterior
+            desfase = sin(t * CONFIG.criatura.cabeza.amplitudMovimiento + j + i) * 0.4;
+          }
+
+          let angulo = anguloBase + desfase;
+
+          // Mantener los patrones pero aplicarlos sobre el nuevo desfase
+          if (seg.patronTentaculos === 'doble') angulo += sin(j * 5 + t * 2) * 0.3;
+          if (seg.patronTentaculos === 'espiral') angulo += (t * 0.5 + i * 0.1);
+
+          let x2 = cos(angulo) * longitud;
+          let y2 = sin(angulo) * longitud;
+          // Bioluminiscencia: brillo
+          let brillo = 80 + 175 * seg.bioluminiscencia;
+          stroke(30, 30, 30, brillo);
+          strokeWeight(grosor);
+          line(0, 0, x2, y2);
+          fill(200, 240, 255, 120 + 120 * seg.bioluminiscencia);
+          noStroke();
+          ellipse(x2, y2, punta, punta);
+        }
+      }
       pop();
     }
   }
@@ -450,6 +500,20 @@ class CreatureManager {
       ellipse(sep, -ojoR, ojoR, ojoR);
     }
     pop();
+  }
+  
+  calcularDesfaseTentaculo(segmento, tentaculoIndex, tiempo, segmentoIndex) {
+    const config = CONFIG.criatura.tentaculoDinamico;
+    let k = (config.k_factor1 + sin(segmento.y * config.k_y_freq - tiempo) * config.k_factor2) * cos(segmento.x * config.k_x_freq);
+    let d = dist(segmento.x, segmento.y, width / 2, height / 2) * config.d_dist_factor; // distancia del centro
+    let e = segmento.y * config.e_y_factor;
+
+    let q = config.q_sin_k_amp * sin(k * config.q_sin_k_freq) +
+      config.q_inv_k_amp / (k + 0.1) + // evitar división por cero
+      sin(segmento.y * config.q_sin_y_freq) * k *
+      (config.q_noise_amp1 + config.q_noise_amp2 * sin(e * config.q_noise_e_freq - d * config.q_noise_d_freq + tiempo * config.q_noise_t_freq + tentaculoIndex));
+
+    return q * config.desfaseFinalFactor;
   }
   
   dibujarDetalles() {

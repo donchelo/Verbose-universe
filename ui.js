@@ -161,6 +161,7 @@ window.UIManager = {
     movLabel.style('font-size', '13px');
     this.controles.velocidadMovimiento = this.crearSlider(0, 0, 120, 12, 0.5, 6, window.CONFIG.criatura.velocidadMovimiento, "Velocidad de movimiento");
     this.controles.amplitudOndulacion = this.crearSlider(0, 0, 120, 12, 0, 30, window.CONFIG.criatura.amplitudOndulacion, "Ondulación corporal");
+    this.controles.texturaSuperficie = this.crearSlider(0, 0, 120, 12, 0, 1, window.CONFIG.criatura.texturaSuperficie, "Textura de movimiento");
     this.controles.amplitudRespiracion = this.crearSlider(0, 0, 120, 12, 0, 0.5, window.CONFIG.criatura.amplitudRespiracion, "Respiración/expansión");
 
     // === APARIENCIA ===
@@ -191,6 +192,27 @@ window.UIManager = {
       }
     });
     this.controles.selectModo = selectModo;
+
+    // === PARÁMETROS AVANZADOS ===
+    let avanzadosLabel = createDiv('Avanzado');
+    avanzadosLabel.parent(controlesContainer);
+    avanzadosLabel.style('font-weight', 'bold');
+    avanzadosLabel.style('margin', '10px 0 4px 0');
+    avanzadosLabel.style('font-size', '13px');
+    this.controles.elasticidad = this.crearSlider(0, 0, 120, 12, 0, 1, window.CONFIG.criatura.elasticidad, "Elasticidad");
+    this.controles.bioluminiscencia = this.crearSlider(0, 0, 120, 12, 0, 1, window.CONFIG.criatura.bioluminiscencia, "Bioluminiscencia");
+    let patronLabel = createSpan('Patrón tentáculos:');
+    patronLabel.style('font-size', '12px');
+    patronLabel.style('color', '#444');
+    patronLabel.parent(controlesContainer);
+    let selectPatron = createSelect();
+    selectPatron.parent(controlesContainer);
+    selectPatron.option('Normal', 'normal');
+    selectPatron.option('Doble', 'doble');
+    selectPatron.option('Espiral', 'espiral');
+    selectPatron.value(window.CONFIG.criatura.patronTentaculos);
+    selectPatron.changed(() => window.UIManager.actualizarConfiguracion());
+    this.controles.patronTentaculos = selectPatron;
   },
   
   crearSlider: function(x, y, w, h, min, max, val, label) {
@@ -355,7 +377,8 @@ window.UIManager = {
     window.CONFIG.criatura.tamaños.medio = this.controles.tamañoMedio.value();
     window.CONFIG.criatura.tamaños.pequeño = this.controles.tamañoPequeño.value();
     window.CONFIG.criatura.velocidadMovimiento = this.controles.velocidadMovimiento.value();
-    window.CONFIG.criatura.velocidadOndulacion = this.controles.amplitudOndulacion.value();
+    window.CONFIG.criatura.amplitudOndulacion = this.controles.amplitudOndulacion.value();
+    window.CONFIG.criatura.texturaSuperficie = this.controles.texturaSuperficie.value();
     window.CONFIG.criatura.velocidadRespiracion = this.controles.amplitudRespiracion.value();
     window.CONFIG.criatura.grosorContorno = this.controles.grosorContorno.value();
     window.CONFIG.criatura.cabeza.numeroTentaculos = this.controles.numeroTentaculos.value();
@@ -363,6 +386,9 @@ window.UIManager = {
     window.CONFIG.criatura.cabeza.grosorTentaculos = this.controles.grosorTentaculos.value();
     window.CONFIG.criatura.cabeza.tamañoPuntas = this.controles.tamañoPuntas.value();
     window.CONFIG.criatura.cabeza.amplitudMovimiento = this.controles.amplitudMovTent.value();
+    window.CONFIG.criatura.elasticidad = this.controles.elasticidad.value();
+    window.CONFIG.criatura.bioluminiscencia = this.controles.bioluminiscencia.value();
+    window.CONFIG.criatura.patronTentaculos = this.controles.patronTentaculos.value();
     if (window.creature && typeof window.creature.recalcularFormasSegmentos === 'function') {
       window.creature.recalcularFormasSegmentos();
     }
@@ -455,6 +481,7 @@ window.UIManager = {
     // Movimiento
     this.controles.velocidadMovimiento.value(window.Utils.random(0.5, 6));
     this.controles.amplitudOndulacion.value(window.Utils.random(0, 30));
+    this.controles.texturaSuperficie.value(window.Utils.random(0, 1));
     this.controles.amplitudRespiracion.value(window.Utils.random(0, 0.5));
     // Apariencia
     this.controles.grosorContorno.value(window.Utils.random(1, 8));
