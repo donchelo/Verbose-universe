@@ -127,9 +127,7 @@ window.UIManager = {
     aparLabel.style('font-weight', 'bold');
     aparLabel.style('margin', '10px 0 4px 0');
     aparLabel.style('font-size', '13px');
-    this.controles.colorR = this.crearSlider(0, 0, 120, 12, 0, 255, window.CONFIG.criatura.color[0], "Color Rojo");
-    this.controles.colorG = this.crearSlider(0, 0, 120, 12, 0, 255, window.CONFIG.criatura.color[1], "Color Verde");
-    this.controles.colorB = this.crearSlider(0, 0, 120, 12, 0, 255, window.CONFIG.criatura.color[2], "Color Azul");
+    this.crearColorPickerHSV();
     this.controles.grosorContorno = this.crearSlider(0, 0, 120, 12, 1, 8, window.CONFIG.criatura.grosorContorno, "Grosor de contorno");
 
     // === MODO DE MOVIMIENTO ===
@@ -322,9 +320,6 @@ window.UIManager = {
     window.CONFIG.criatura.cabeza.grosorTentaculos = this.controles.grosorTentaculos.value();
     window.CONFIG.criatura.cabeza.tamañoPuntas = this.controles.tamañoPuntas.value();
     window.CONFIG.criatura.cabeza.amplitudMovimiento = this.controles.amplitudMovTent.value();
-    window.CONFIG.criatura.color[0] = this.controles.colorR.value();
-    window.CONFIG.criatura.color[1] = this.controles.colorG.value();
-    window.CONFIG.criatura.color[2] = this.controles.colorB.value();
     if (window.creature && typeof window.creature.recalcularFormasSegmentos === 'function') {
       window.creature.recalcularFormasSegmentos();
     }
@@ -447,10 +442,29 @@ window.UIManager = {
     this.controles.amplitudOndulacion.value(window.Utils.random(0, 30));
     this.controles.amplitudRespiracion.value(window.Utils.random(0, 0.5));
     // Apariencia
-    this.controles.colorR.value(window.Utils.random(0, 255));
-    this.controles.colorG.value(window.Utils.random(0, 255));
-    this.controles.colorB.value(window.Utils.random(0, 255));
     this.controles.grosorContorno.value(window.Utils.random(1, 8));
+
+    // === RANDOMIZAR COLOR HSV ===
+    if (window.UIManager._colorPickerHSV && typeof window.UIManager._colorPickerValue !== 'undefined') {
+      // Randomizar H, S, V
+      let h = Math.random();
+      let s = 0.5 + Math.random() * 0.5; // saturación alta
+      let v = 0.7 + Math.random() * 0.3; // brillo alto
+      window.UIManager._colorPickerHSV[0] = h;
+      window.UIManager._colorPickerHSV[1] = s;
+      window.UIManager._colorPickerHSV[2] = v;
+      window.UIManager._colorPickerValue = v;
+      // Actualizar color de criatura
+      let rgb = Utils.hsvToRgb(h, s, v);
+      window.CONFIG.criatura.color[0] = rgb[0];
+      window.CONFIG.criatura.color[1] = rgb[1];
+      window.CONFIG.criatura.color[2] = rgb[2];
+      // Actualizar visualmente el selector si existe
+      if (window.UIManager._actualizarColorPickerVisual) {
+        window.UIManager._actualizarColorPickerVisual();
+      }
+    }
+
     // Actualizar config
     this.actualizarConfiguracion();
     this.sincronizarValoresVisuales();
@@ -482,5 +496,167 @@ window.UIManager = {
     if (this.controles && this.controles.selectModo) {
       this.controles.selectModo.value(modo);
     }
+  },
+
+  // --- Nuevo método para el selector de color tipo arcoíris (HSV) ---
+  crearColorPickerHSV: function() {
+    // Contenedor visual
+    let container = createDiv();
+    container.parent(panelDiv);
+    container.style('display', 'flex');
+    container.style('flex-direction', 'column');
+    container.style('align-items', 'center');
+    container.style('margin-bottom', '14px');
+
+    // Etiqueta
+    let etiqueta = createSpan('Color:');
+    etiqueta.style('font-size', '12px');
+    etiqueta.style('color', '#444');
+    etiqueta.style('margin-bottom', '4px');
+    etiqueta.parent(container);
+
+    // Canvas HTML puro para la rueda de color
+    let size = 100;
+    let colorCanvas = document.createElement('canvas');
+    colorCanvas.width = size;
+    colorCanvas.height = size;
+    colorCanvas.style.borderRadius = '50%';
+    colorCanvas.style.display = 'block';
+    colorCanvas.style.background = '#fff';
+    let colorDiv = createDiv();
+    colorDiv.parent(container);
+    colorDiv.elt.appendChild(colorCanvas);
+    colorDiv.style('position', 'relative');
+    colorDiv.style('width', size + 'px');
+    colorDiv.style('height', size + 'px');
+    colorDiv.style('margin-bottom', '6px');
+
+    // Dibujar la rueda de color HSV en el canvas HTML
+    function drawColorWheelHTML(val) {
+      let ctx = colorCanvas.getContext('2d');
+      ctx.clearRect(0, 0, size, size);
+      let radius = size / 2 - 2;
+      let imageData = ctx.createImageData(size, size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          let dx = x - size / 2;
+          let dy = y - size / 2;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist <= radius) {
+            let angle = (Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI * 2);
+            let hue = angle / (Math.PI * 2);
+            let sat = dist / radius;
+            let rgb = Utils.hsvToRgb(hue, sat, val);
+            let idx = (y * size + x) * 4;
+            imageData.data[idx] = rgb[0];
+            imageData.data[idx + 1] = rgb[1];
+            imageData.data[idx + 2] = rgb[2];
+            imageData.data[idx + 3] = 255;
+          }
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Estado del color HSV
+    let hsv;
+    if (!window.UIManager._colorPickerHSV) {
+      // Inicializar con color random la primera vez
+      let h = Math.random();
+      let s = 0.5 + Math.random() * 0.5;
+      let v = 0.7 + Math.random() * 0.3;
+      hsv = [h, s, v];
+      window.UIManager._colorPickerHSV = hsv;
+      window.UIManager._colorPickerValue = v;
+      let rgb = Utils.hsvToRgb(h, s, v);
+      window.CONFIG.criatura.color[0] = rgb[0];
+      window.CONFIG.criatura.color[1] = rgb[1];
+      window.CONFIG.criatura.color[2] = rgb[2];
+    } else {
+      hsv = window.UIManager._colorPickerHSV;
+    }
+    drawColorWheelHTML(hsv[2]);
+
+    // Indicador de selección
+    let selector = createDiv();
+    selector.parent(colorDiv);
+    selector.style('position', 'absolute');
+    selector.style('width', '14px');
+    selector.style('height', '14px');
+    selector.style('border', '2px solid #fff');
+    selector.style('border-radius', '50%');
+    selector.style('box-shadow', '0 0 2px #000');
+    selector.style('pointer-events', 'none');
+    function updateSelectorPos() {
+      selector.style('left', (size/2 + hsv[1]*Math.cos(hsv[0]*2*Math.PI)*size/2 - 7) + 'px');
+      selector.style('top', (size/2 + hsv[1]*Math.sin(hsv[0]*2*Math.PI)*size/2 - 7) + 'px');
+    }
+    updateSelectorPos();
+
+    // Interacción con la rueda de color
+    colorCanvas.addEventListener('mousedown', function(e) {
+      let rect = colorCanvas.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+      let dx = x - size/2;
+      let dy = y - size/2;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let radius = size/2 - 2;
+      if (dist <= radius) {
+        let angle = (Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI * 2);
+        let hue = angle / (Math.PI * 2);
+        let sat = dist / radius;
+        hsv[0] = hue;
+        hsv[1] = sat;
+        updateSelectorPos();
+        // Actualizar color
+        let rgb = Utils.hsvToRgb(hue, sat, hsv[2]);
+        window.CONFIG.criatura.color[0] = rgb[0];
+        window.CONFIG.criatura.color[1] = rgb[1];
+        window.CONFIG.criatura.color[2] = rgb[2];
+        window.UIManager._colorPickerHSV = [hue, sat, hsv[2]];
+      }
+    });
+
+    // Slider de brillo (valor)
+    let brilloLabel = createSpan('Brillo:');
+    brilloLabel.style('font-size', '11px');
+    brilloLabel.style('color', '#444');
+    brilloLabel.style('margin-right', '6px');
+    brilloLabel.parent(container);
+    let brilloSlider = createSlider(0, 1, hsv[2], 0.01);
+    brilloSlider.parent(container);
+    brilloSlider.style('width', '80px');
+    brilloSlider.input(function() {
+      hsv[2] = brilloSlider.value();
+      window.UIManager._colorPickerValue = hsv[2];
+      drawColorWheelHTML(hsv[2]);
+      // Actualizar color
+      let rgb = Utils.hsvToRgb(hsv[0], hsv[1], hsv[2]);
+      window.CONFIG.criatura.color[0] = rgb[0];
+      window.CONFIG.criatura.color[1] = rgb[1];
+      window.CONFIG.criatura.color[2] = rgb[2];
+      window.UIManager._colorPickerHSV = [hsv[0], hsv[1], hsv[2]];
+      updateSelectorPos();
+    });
+    // Inicializar color
+    let rgb = Utils.hsvToRgb(hsv[0], hsv[1], hsv[2]);
+    window.CONFIG.criatura.color[0] = rgb[0];
+    window.CONFIG.criatura.color[1] = rgb[1];
+    window.CONFIG.criatura.color[2] = rgb[2];
+    window.UIManager._colorPickerHSV = [hsv[0], hsv[1], hsv[2]];
+    updateSelectorPos();
+
+    // Permitir actualización visual externa (para randomizar)
+    window.UIManager._actualizarColorPickerVisual = function() {
+      let hsvActual = window.UIManager._colorPickerHSV || [0,0,1];
+      drawColorWheelHTML(hsvActual[2]);
+      brilloSlider.value(hsvActual[2]);
+      selector.style('left', (size/2 + hsvActual[1]*Math.cos(hsvActual[0]*2*Math.PI)*size/2 - 7) + 'px');
+      selector.style('top', (size/2 + hsvActual[1]*Math.sin(hsvActual[0]*2*Math.PI)*size/2 - 7) + 'px');
+    };
+
+    // --- Sincronizar visualmente al crear el picker ---
+    window.UIManager._actualizarColorPickerVisual();
   }
 };
